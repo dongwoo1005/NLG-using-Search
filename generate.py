@@ -2,6 +2,8 @@
 # for A1P1, valid sentence structure is: "NNP", "VBD", "DT", "NN"
 import queue
 
+# TODO: NOTE - Calculating prob is somehow not working correctly!!!
+
 ################################################################3
 # global variables
 p1struct = ["NNP", "VBD", "DT", "NN"]
@@ -98,13 +100,13 @@ def parseGraph(fileName):
         wlist = line.split('//')
         word1list = wlist[0].split('/')
         word2list = wlist[1].split('/')
-        prov = wlist[2]
+        prob = float(wlist[2])
 
         # generate word
         word1 = Word(word1list[0], word1list[1])
         word2 = Word(word2list[0], word2list[1])
 
-        afternode = NextNode(word2, prov)
+        afternode = NextNode(word2, prob)
 
         if word1.wordStr in graph:
             thisnode = graph[word1.wordStr]
@@ -125,7 +127,7 @@ def printGraph(graph):
         toprint = word + "[" + node.word.type + "]"
         afterstring = "{"
         for nextNode in node.nextList:
-            afterstring = afterstring + "(" + nextNode.after.wordStr + "[" + nextNode.after.type + "] ," + nextNode.prob + ")"
+            afterstring = afterstring + "(" + nextNode.after.wordStr + "[" + nextNode.after.type + "] ," + str(nextNode.prob) + ")"
             afterstring += ", "
         afterstring += "}"
         toprint = toprint + " - " + afterstring
@@ -135,7 +137,6 @@ def printGraph(graph):
 ############################################################
 ############################################################
 # calculate probability of given sentence s
-# todo: fix this !!
 def calculateProb(s, graph) :
     sentence_len = len(s)
     init_word = s[0]
@@ -151,6 +152,29 @@ def calculateProb(s, graph) :
         prob = prob * this_prob
     return prob
 
+
+def trackSentencesSoFar(lastWord, initWord,  cp_dict) :
+    sentence_so_far = []
+    sentence_so_far.append(lastWord)
+    if not cp_dict:
+        return sentence_so_far
+    else :
+        # check and add to sentence so far until parent reach to initWord
+        x = lastWord
+        while x in cp_dict:
+            parent = cp_dict[x]
+            sentence_so_far = [parent] + sentence_so_far
+            if parent == initWord:
+                break
+            else :
+                x = parent
+        sentenceStr = " ".join(str(y) for y in sentence_so_far)
+        print("sentence_so_far: [ " + sentenceStr + " ]")
+        return sentence_so_far
+
+
+
+
 ############################################################
 ############################################################
 # main function that generates sentence using BFS
@@ -158,6 +182,8 @@ def generate(startingWord, sentenceSpec, graph):
     sentence_so_far = []
     highest_prob_sentence = []
     prob = float(0)
+
+    parent_child_dict = dict()  # dictionary to store the parent of given child
 
     # parse graph from given file
     g = parseGraph(graph)
@@ -178,33 +204,37 @@ def generate(startingWord, sentenceSpec, graph):
     while not node_visited.empty():
         this_word = node_visited.get()
         if this_word in g:
-            sentence_so_far.append(this_word)
+            #sentence_so_far.append(this_word)
             this_node = g[this_word]
             node_count += 1
 
-            # todo: check if it is sentence and if it may be sentence.
-            is_sentence = isValidSentence(sentence_so_far, sentenceSpec, g)
-            if __name__ == '__main__':
-                if is_sentence:
-                    # update the sentence that has highest probability
-                    this_prob = calculateProb(sentence_so_far, g)
-                    print("this_prob: " + this_prob)
+            print("this_word : " + this_word)
 
-                    if this_prob > prob:
-                        prob = this_prob
-                        highest_prob_sentence = sentence_so_far
-                else:
-                    may_sentence = mayFormValidSentence(sentence_so_far, sentenceSpec, g)
-                    if may_sentence :
-                        # continue if and only if MayFormSentence is true
-                        for nextNode in this_node.nextList:
-                            if not nextNode.visited:
-                                nextNode.visited = True
-                                node_visited.put(nextNode.after.wordStr)
-                    else :
-                        # No way to form sentence, remove from the list and go back
-                        # todo: managing sentence_so_far may need to be changed
-                        sentence_so_far.remove(this_word)
+            sentence_so_far = trackSentencesSoFar(this_word, startingWord, parent_child_dict)
+            is_sentence = isValidSentence(sentence_so_far, sentenceSpec, g)
+            #if __name__ == '__main__':
+            if is_sentence:
+                # update the sentence that has highest probability
+                this_prob = calculateProb(sentence_so_far, g)
+                print("this_prob: " + str(this_prob))
+
+                if this_prob > prob:
+                    prob = this_prob
+                    highest_prob_sentence = sentence_so_far
+            else:
+                may_sentence = mayFormValidSentence(sentence_so_far, sentenceSpec, g)
+                if may_sentence :
+                    # continue if and only if MayFormSentence is true
+                    for nextNode in this_node.nextList:
+                        if not nextNode.visited:
+                            nextNode.visited = True
+                            parent_child_dict[nextNode.after.wordStr] = this_word
+                            node_visited.put(nextNode.after.wordStr)
+                #else :
+                    # No way to form sentence, remove from the list and go back
+                    # todo: managing sentence_so_far may need to be changed - May be changed
+                    #sentence_so_far.remove(this_word)
+
     if highest_prob_sentence != []:
         sentence = " ".join(str(x) for x in highest_prob_sentence)
         print("\"" + sentence + "\" with probability " + str(prob))
