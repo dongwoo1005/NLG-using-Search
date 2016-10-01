@@ -1,49 +1,12 @@
 # example string from input (for test): there/EX//was/VBD//0.21311475409836064
 # for A1P1, valid sentence structure is: "NNP", "VBD", "DT", "NN"
 import queue
-
-# TODO: NOTE - Calculating prob is somehow not working correctly!!!
+import decimal
+import graph_struct
 
 ################################################################3
 # global variables
 p1struct = ["NNP", "VBD", "DT", "NN"]
-
-
-##################################################################
-
-class GraphNode():
-    "Graph Node structure for each word"
-
-    def __init__(self, word):
-        self.word = word
-        self.used = False
-        self.nextList = []
-
-    def addNext(self, next):
-        self.nextList.append(next)
-
-    def probNext(self, nextWord):
-        for nextNode in self.nextList:
-            if nextNode.after.wordStr == nextWord:
-                return nextNode.prob
-        return 0
-
-
-class NextNode():
-    "Node structure which contains prev, after and probability"
-
-    def __init__(self, after, prob):
-        self.after = after
-        self.visited = False
-        self.prob = prob
-
-
-class Word():
-    "Word structure containing word and type"
-
-    def __init__(self, wordStr, type):
-        self.wordStr = wordStr
-        self.type = type
 
 
 ##################################################################
@@ -100,20 +63,20 @@ def parseGraph(fileName):
         wlist = line.split('//')
         word1list = wlist[0].split('/')
         word2list = wlist[1].split('/')
-        prob = float(wlist[2])
+        prob = decimal.Decimal(wlist[2])
 
         # generate word
-        word1 = Word(word1list[0], word1list[1])
-        word2 = Word(word2list[0], word2list[1])
+        word1 = graph_struct.Word(word1list[0], word1list[1])
+        word2 = graph_struct.Word(word2list[0], word2list[1])
 
-        afternode = NextNode(word2, prob)
+        afternode = graph_struct.NextNode(word2, prob)
 
         if word1.wordStr in graph:
             thisnode = graph[word1.wordStr]
             thisnode.addNext(afternode)
             graph[word1.wordStr] = thisnode
         else:
-            thisnode = GraphNode(word1)
+            thisnode = graph_struct.GraphNode(word1)
             thisnode.addNext(afternode)
             graph[word1.wordStr] = thisnode
 
@@ -140,7 +103,7 @@ def printGraph(graph):
 def calculateProb(s, graph) :
     sentence_len = len(s)
     init_word = s[0]
-    prob = 1
+    prob = decimal.Decimal(1)
     for i in range(0, sentence_len):
         dest_word = s[i]
         this_prob = 1
@@ -150,6 +113,7 @@ def calculateProb(s, graph) :
             origin = graph[init_word]
             this_prob = origin.probNext(dest_word)
         prob = prob * this_prob
+        init_word = s[i]
     return prob
 
 
@@ -181,7 +145,7 @@ def trackSentencesSoFar(lastWord, initWord,  cp_dict) :
 def generate(startingWord, sentenceSpec, graph):
     sentence_so_far = []
     highest_prob_sentence = []
-    prob = float(0)
+    prob = decimal.Decimal(0)
 
     parent_child_dict = dict()  # dictionary to store the parent of given child
 
@@ -230,10 +194,6 @@ def generate(startingWord, sentenceSpec, graph):
                             nextNode.visited = True
                             parent_child_dict[nextNode.after.wordStr] = this_word
                             node_visited.put(nextNode.after.wordStr)
-                #else :
-                    # No way to form sentence, remove from the list and go back
-                    # todo: managing sentence_so_far may need to be changed - May be changed
-                    #sentence_so_far.remove(this_word)
 
     if highest_prob_sentence != []:
         sentence = " ".join(str(x) for x in highest_prob_sentence)
