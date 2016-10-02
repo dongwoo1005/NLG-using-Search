@@ -39,3 +39,47 @@ class Word():
 
 
 #################################################################
+
+# for storing queue structure
+class QueueEntry:
+    def __init__(self, wordKey, parents):
+        self.wordKey = wordKey
+        self.parents = parents
+
+    def generateSentence(self):
+        sentence = [self.wordKey]
+        if self.parents:
+            sentence = self.parents + sentence
+        sentenceStr= " ".join(str(y) for y in sentence)
+        # print("Sentence: " + sentenceStr)
+        print("sentence_so_far(" + str(len(sentence)) + " words): [ " + sentenceStr + "]")
+        return sentence
+
+#################################################################
+
+# for parent-child-dictionary structure
+
+class ChildDict:
+    def __init__(self, word):
+        self.word = word
+        self.parents = []
+
+    def addParent(self, parent):
+        self.parents.append(parent)
+
+    def getUncheckedParent(self):
+        for p in self.parents:
+            if not p.checked:
+                p.checkParent()
+                return p.word.wordStr + "-" + p.word.type
+        return ""
+
+
+
+class ParentDict:
+    def __init__(self,word):
+        self.word = word
+        self.checked = False
+
+    def checkParent(self):
+        self.checked = True
