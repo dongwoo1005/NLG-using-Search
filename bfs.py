@@ -3,7 +3,6 @@ import decimal
 import graph_struct
 import common
 
-# NOTE: This file has copied to bsf.py
 
 # main function that generates sentence using BFS
 def generate(startingWord, sentenceSpec, graph):
@@ -79,29 +78,3 @@ def generate(startingWord, sentenceSpec, graph):
     else:
         print("No valid sentence can be formed")
 
-
-
-
-############################################################################
-############################################################################
-p1struct = ["NNP", "VBD", "DT", "NN"]
-
-generate("hans", p1struct, "input.txt")
-
-graphFileName = "input.txt"
-startingWord1 = "benjamin"
-startingWord2 = "a"
-sentenceSpec1 = ["NNP", "VBD", "DT", "NN"]
-sentenceSpec2 = [ "DT", "NN", "VBD", "NNP"]
-sentenceSpec3 = [ "NNP", "VBD", "DT", "JJS", "NN"]
-sentenceSpec4 = [ "DT", "NN", "VBD", "NNP", "IN", "DT", "NN" ]
-
-print("------ Part 2 BFS------")
-print("Test 1:")
-generate(startingWord1, sentenceSpec1, graphFileName)
-print("Test 2:")
-generate(startingWord2, sentenceSpec2, graphFileName)
-print("Test 3:")
-generate(startingWord1, sentenceSpec3, graphFileName)
-print("Test 4:")
-generate(startingWord2, sentenceSpec4, graphFileName)
