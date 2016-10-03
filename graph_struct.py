@@ -1,5 +1,6 @@
 ##################################################################
-# Structure classes for graph.
+# Stores Graph structure classes and functions related to Graph
+import decimal
 
 class GraphNode():
     "Graph Node structure for each word"
@@ -17,7 +18,6 @@ class GraphNode():
         for nextNode in self.nextList:
             if nextNode.after.wordStr == nextWord:
                 next_prob = nextNode.prob
-        print("### " + self.word.wordStr + "-" + nextWord  +" prob: " + str(next_prob))
         return next_prob
 
 
@@ -51,35 +51,58 @@ class QueueEntry:
         if self.parents:
             sentence = self.parents + sentence
         sentenceStr= " ".join(str(y) for y in sentence)
-        # print("Sentence: " + sentenceStr)
-        print("sentence_so_far(" + str(len(sentence)) + " words): [ " + sentenceStr + "]")
+        # print("sentence_so_far(" + str(len(sentence)) + " words): [ " + sentenceStr + "]")
         return sentence
 
 #################################################################
 
-# for parent-child-dictionary structure
+# Graph Functions
+###################################################################
+###################################################################
+# Parse the text and generate appropriate graph (dictionary structure) for words
+# Read from input.text (MAY BE CHANGED LATER)
+# input:
+def parseGraph(fileName):
+    f = open(fileName, 'r')
+    graph = dict()
+    for line in f.readlines():
+        wlist = line.split('//')
+        word1list = wlist[0].split('/')
+        word2list = wlist[1].split('/')
+        prob = decimal.Decimal(wlist[2])
 
-class ChildDict:
-    def __init__(self, word):
-        self.word = word
-        self.parents = []
+        # generate word
+        word1 = Word(word1list[0], word1list[1])
+        word2 = Word(word2list[0], word2list[1])
 
-    def addParent(self, parent):
-        self.parents.append(parent)
+        afternode = NextNode(word2, prob)
 
-    def getUncheckedParent(self):
-        for p in self.parents:
-            if not p.checked:
-                p.checkParent()
-                return p.word.wordStr + "-" + p.word.type
-        return ""
+        graphKey = word1.wordStr + "-" + word1.type
+
+        if graphKey in graph:
+            thisnode = graph[graphKey]
+            thisnode.addNext(afternode)
+            graph[graphKey] = thisnode
+        else:
+            thisnode = GraphNode(word1)
+            thisnode.addNext(afternode)
+            graph[graphKey] = thisnode
+
+    return graph
 
 
-
-class ParentDict:
-    def __init__(self,word):
-        self.word = word
-        self.checked = False
-
-    def checkParent(self):
-        self.checked = True
+# Print Graph
+# Note: this will not be used in actual function
+def printGraph(graph):
+    print("---------------------------Print Graph----------------------------")
+    for word, node in graph.items():
+        toprint = word
+        afterstring = "{"
+        for nextNode in node.nextList:
+            afterstring = afterstring + "(" + nextNode.after.wordStr + "[" + nextNode.after.type + "] ," + str(nextNode.prob) + ")"
+            afterstring += ", "
+        afterstring += "}"
+        toprint = toprint + " : " + afterstring
+        print(toprint)
+        print("\n")
+    print("------------------End of Print Graph -----------------------------")
