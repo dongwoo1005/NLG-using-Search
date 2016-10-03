@@ -109,8 +109,6 @@ def build_sentence(sentence):
         string += sentence[i].string
         if i < num_words - 1:
             string += " "
-    if not string:
-        string = "EMPTY"
     return string
 
 
@@ -120,8 +118,6 @@ def duplicate_word(word):
 
 
 def run_bfs(starting_word, sentence_spec, graph):
-
-    print("============RUN_BFS===========")
 
     num_words_considered = 0
     highest_probability = Decimal(0)
@@ -139,22 +135,18 @@ def run_bfs(starting_word, sentence_spec, graph):
 
         current_word = my_queue.get()
         num_words_considered += 1
-        print("Considering word: ", end="")
-        print(current_word)
 
         current_sentence = current_word.generate_sentence()
+
         if is_sentence_valid(current_sentence, sentence_spec):
-            print("current sentence \"" + build_sentence(current_sentence) + "\" is valid")
+
             current_sentence_probability = calculate_probability_of(current_sentence)
-            print("with probability: " + str(current_sentence_probability))
             if current_sentence_probability > highest_probability:
-                print("UPDATE THE CANDIDATE")
+
                 highest_probability = current_sentence_probability
                 highest_probability_sentence = current_sentence
         else:
-            print("current sentence is not complete")
             if current_word not in graph:
-                print("current word not in graph")
                 continue
             neighbor_words = graph[current_word]
 
@@ -163,45 +155,31 @@ def run_bfs(starting_word, sentence_spec, graph):
                  if neighbor_word.part_of_speech == sentence_spec[current_word.depth + 1]]
 
             if current_word.depth + 1 == len(sentence_spec) - 1 and filtered_neighbor_words:
-                print("GET MAX for the last level")
                 max_probability = max(neighbor_word.probability for neighbor_word in filtered_neighbor_words)
                 filtered_neighbor_words = \
                     [neighbor_word for neighbor_word in filtered_neighbor_words
                      if neighbor_word.probability == max_probability]
 
-            print("FILTERED CANDIDATES IN LEVEL "
-                  + str(current_word.depth + 1) + ": " + build_sentence(filtered_neighbor_words))
-
             for neighbor in filtered_neighbor_words:
-                print("searching neighbor: ", end="")
-                print(neighbor)
                 if not neighbor.visited:
                     neighbor.visited = True
                     neighbor.prev = current_word
                     neighbor.depth = current_word.depth + 1
                     my_queue.put(neighbor)
-                    print("ENQUEUE: ", end="")
-                    print(neighbor)
                 else:
                     duplicate = duplicate_word(neighbor)
                     duplicate.visited = True
                     duplicate.prev = current_word
                     duplicate.depth = current_word.depth + 1
                     my_queue.put(duplicate)
-                    print("ENQUEUE: ", end="")
-                    print(duplicate)
-        print("------------------------------")
 
     sentence = build_sentence(highest_probability_sentence)
 
-    print("============OUTPUT============")
     if highest_probability_sentence:
         print("\"" + sentence + "\" with probability " + str(highest_probability))
         print("Total nodes considered: " + str(num_words_considered))
     else:
-        print(sentence)
         print("No valid sentence can be formed")
-    print("==============================")
 
 
 def generate(starting_word, sentence_spec, file_name):
@@ -210,10 +188,13 @@ def generate(starting_word, sentence_spec, file_name):
     # print_graph(graph)
     run_bfs(starting_word, sentence_spec, graph)
 
-FILE_NAME = "../input.txt"
+FILE_NAME = "input.txt"
 
-STARTING_WORD = "benjamin"
+STARTING_WORD = "hans"
 SENTENCE_SPEC = ["NNP", "VBD", "DT", "NN"]
+
+STARTING_WORD1 = "benjamin"
+SENTENCE_SPEC1 = ["NNP", "VBD", "DT", "NN"]
 
 STARTING_WORD2 = "a"
 SENTENCE_SPEC2 = ["DT", "NN", "VBD", "NNP"]
@@ -224,5 +205,17 @@ SENTENCE_SPEC3 = ["NNP", "VBD", "DT", "JJS", "NN"]
 STARTING_WORD4 = "a"
 SENTENCE_SPEC4 = ["DT", "NN", "VBD", "NNP", "IN", "DT", "NN"]
 
+MY_STARTING_WORD = "hans"
+MY_SENTENCE_SPEC = ["NNP", "VBD"]
 
+print("EXAMPLE")
+generate(STARTING_WORD, SENTENCE_SPEC, FILE_NAME)
+
+print("TEST 1:")
+generate(STARTING_WORD1, SENTENCE_SPEC1, FILE_NAME)
+print("TEST 2:")
+generate(STARTING_WORD2, SENTENCE_SPEC2, FILE_NAME)
+print("TEST 3:")
+generate(STARTING_WORD3, SENTENCE_SPEC3, FILE_NAME)
+print("TEST 4:")
 generate(STARTING_WORD4, SENTENCE_SPEC4, FILE_NAME)
