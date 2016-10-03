@@ -10,7 +10,6 @@ class Word:
         self.part_of_speech = word_string_with_tag[1]
         self.probability = probability
         self.prev = None
-        self.visited = False
         self.depth = 0
 
     def __eq__(self, other):
@@ -35,10 +34,8 @@ class Word:
 
     def get_probability_of_sentence(self):
         probability = self.probability
-        print(str(probability))
         current_word = self
         while current_word.prev is not None:
-            print(str(current_word.probability))
             probability *= current_word.probability
             current_word = current_word.prev
         return probability
@@ -49,7 +46,7 @@ def parse(file_name):
     try:
         file = open(file_name)
     except FileNotFoundError:
-        print("Error: File \"" + file_name + "\" was not found!" )
+        print("Error: File \"" + file_name + "\" was not found!")
         sys.exit(1)
 
     graph = {}
@@ -86,7 +83,7 @@ def is_sentence_valid(sentence, sentence_spec):
     if len(sentence) != len(sentence_spec):
         return False
 
-    for i in range(0, len(sentence)):
+    for i in range(len(sentence)):
         if sentence[i].part_of_speech != sentence_spec[i]:
             return False
 
@@ -105,7 +102,7 @@ def build_sentence(sentence):
 
     string = ""
     num_words = len(sentence)
-    for i in range(0, num_words):
+    for i in range(num_words):
         string += sentence[i].string
         if i < num_words - 1:
             string += " "
@@ -161,21 +158,13 @@ def run_bfs(starting_word, sentence_spec, graph):
                      if neighbor_word.probability == max_probability]
 
             for neighbor in filtered_neighbor_words:
-                if not neighbor.visited:
-                    neighbor.visited = True
-                    neighbor.prev = current_word
-                    neighbor.depth = current_word.depth + 1
-                    my_queue.put(neighbor)
-                else:
-                    duplicate = duplicate_word(neighbor)
-                    duplicate.visited = True
-                    duplicate.prev = current_word
-                    duplicate.depth = current_word.depth + 1
-                    my_queue.put(duplicate)
-
-    sentence = build_sentence(highest_probability_sentence)
+                duplicate = duplicate_word(neighbor)
+                duplicate.prev = current_word
+                duplicate.depth = current_word.depth + 1
+                my_queue.put(duplicate)
 
     if highest_probability_sentence:
+        sentence = build_sentence(highest_probability_sentence)
         print("\"" + sentence + "\" with probability " + str(highest_probability))
         print("Total nodes considered: " + str(num_words_considered))
     else:
@@ -188,7 +177,8 @@ def generate(starting_word, sentence_spec, file_name):
     # print_graph(graph)
     run_bfs(starting_word, sentence_spec, graph)
 
-FILE_NAME = "input.txt"
+
+FILE_NAME = "../input.txt"
 
 STARTING_WORD = "hans"
 SENTENCE_SPEC = ["NNP", "VBD", "DT", "NN"]
