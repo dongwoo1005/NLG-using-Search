@@ -58,18 +58,6 @@ def parse(file_name):
     return graph
 
 
-def print_graph(graph):
-
-    print("=========PRINT_GRAPH============")
-    for word in graph:
-        print("\nWord: ", end="")
-        print(word)
-        print("Neighbors: ")
-        for neighbor_word in graph[word]:
-            print(neighbor_word)
-    print("========END_PRINT_GRAPH=========")
-
-
 def calculate_probability_of_sentence(sentence):
 
     probability = Decimal(1)
@@ -159,7 +147,6 @@ def run_bfs(starting_word, sentence_spec, graph):
 def generate(starting_word, sentence_spec, file_name):
 
     graph = parse(file_name)
-    # print_graph(graph)
     run_bfs(starting_word, sentence_spec, graph)
 
 
