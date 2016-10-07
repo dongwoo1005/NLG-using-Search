@@ -24,21 +24,13 @@ class Word:
     def __hash__(self):
         return hash((self.string, self.part_of_speech))
 
-    def generate_sentence(self):
+    def generate_sentence_word_list(self):
         sentence = [self]
         current_word = self
         while current_word.prev is not None:
             sentence = [current_word.prev] + sentence
             current_word = current_word.prev
         return sentence
-
-    def get_probability_of_sentence(self):
-        probability = self.probability
-        current_word = self
-        while current_word.prev is not None:
-            probability *= current_word.probability
-            current_word = current_word.prev
-        return probability
 
 
 def parse(file_name):
@@ -78,19 +70,7 @@ def print_graph(graph):
     print("========END_PRINT_GRAPH=========")
 
 
-def is_sentence_valid(sentence, sentence_spec):
-
-    if len(sentence) != len(sentence_spec):
-        return False
-
-    for i in range(len(sentence)):
-        if sentence[i].part_of_speech != sentence_spec[i]:
-            return False
-
-    return True
-
-
-def calculate_probability_of(sentence):
+def calculate_probability_of_sentence(sentence):
 
     probability = Decimal(1)
     for word in sentence:
@@ -98,7 +78,21 @@ def calculate_probability_of(sentence):
     return probability
 
 
-def build_sentence(sentence):
+def duplicate_word(word):
+    new_word = Word([word.string, word.part_of_speech], word.probability)
+    return new_word
+
+
+def filter_list_of_words_by_tag(neighbor_words, part_of_speech):
+    return [neighbor_word for neighbor_word in neighbor_words if neighbor_word.part_of_speech == part_of_speech]
+
+
+def filter_list_of_words_by_max_probability(neighbor_words):
+    max_probability = max(neighbor_word.probability for neighbor_word in neighbor_words)
+    return [neighbor_word for neighbor_word in neighbor_words if neighbor_word.probability == max_probability]
+
+
+def get_sentence_from_word_list(sentence):
 
     string = ""
     num_words = len(sentence)
@@ -109,21 +103,18 @@ def build_sentence(sentence):
     return string
 
 
-def duplicate_word(word):
-    new_word = Word([word.string, word.part_of_speech], word.probability)
-    return new_word
-
-
 def run_bfs(starting_word, sentence_spec, graph):
 
     num_words_considered = 0
     highest_probability = Decimal(0)
-    highest_probability_sentence = []
+    highest_probability_sentence_word_list = []
 
     root_word = Word([starting_word, sentence_spec[0]])
     if root_word not in graph:
         print("Starting word \"" + starting_word + "\" was not found in the provided input file.")
         return
+
+    sentence_spec_len = len(sentence_spec) - 1
 
     my_queue = Queue()
     my_queue.put(root_word)
@@ -133,38 +124,32 @@ def run_bfs(starting_word, sentence_spec, graph):
         current_word = my_queue.get()
         num_words_considered += 1
 
-        current_sentence = current_word.generate_sentence()
+        if current_word.depth == sentence_spec_len:
 
-        if is_sentence_valid(current_sentence, sentence_spec):
+            sentence_word_list = current_word.generate_sentence_word_list()
+            current_sentence_probability = calculate_probability_of_sentence(sentence_word_list)
 
-            current_sentence_probability = calculate_probability_of(current_sentence)
             if current_sentence_probability > highest_probability:
 
                 highest_probability = current_sentence_probability
-                highest_probability_sentence = current_sentence
+                highest_probability_sentence_word_list = sentence_word_list
         else:
+
             if current_word not in graph:
                 continue
-            neighbor_words = graph[current_word]
 
-            filtered_neighbor_words = \
-                [neighbor_word for neighbor_word in neighbor_words
-                 if neighbor_word.part_of_speech == sentence_spec[current_word.depth + 1]]
+            neighbor_words = filter_list_of_words_by_tag(graph[current_word], sentence_spec[current_word.depth + 1])
+            if current_word.depth + 1 == sentence_spec_len and neighbor_words:
+                neighbor_words = filter_list_of_words_by_max_probability(neighbor_words)
 
-            if current_word.depth + 1 == len(sentence_spec) - 1 and filtered_neighbor_words:
-                max_probability = max(neighbor_word.probability for neighbor_word in filtered_neighbor_words)
-                filtered_neighbor_words = \
-                    [neighbor_word for neighbor_word in filtered_neighbor_words
-                     if neighbor_word.probability == max_probability]
-
-            for neighbor in filtered_neighbor_words:
+            for neighbor in neighbor_words:
                 duplicate = duplicate_word(neighbor)
                 duplicate.prev = current_word
                 duplicate.depth = current_word.depth + 1
                 my_queue.put(duplicate)
 
-    if highest_probability_sentence:
-        sentence = build_sentence(highest_probability_sentence)
+    if highest_probability_sentence_word_list:
+        sentence = get_sentence_from_word_list(highest_probability_sentence_word_list)
         print("\"" + sentence + "\" with probability " + str(highest_probability))
         print("Total nodes considered: " + str(num_words_considered))
     else:
