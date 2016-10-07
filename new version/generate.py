@@ -76,6 +76,8 @@ def filter_list_of_words_by_tag(neighbor_words, part_of_speech):
 
 
 def filter_list_of_words_by_max_probability(neighbor_words):
+    if not neighbor_words:
+        return neighbor_words
     max_probability = max(neighbor_word.probability for neighbor_word in neighbor_words)
     return [neighbor_word for neighbor_word in neighbor_words if neighbor_word.probability == max_probability]
 
@@ -91,7 +93,7 @@ def get_sentence_from_word_list(sentence):
     return string
 
 
-def run_bfs(starting_word, sentence_spec, graph):
+def run_bfs(starting_word, sentence_spec, search_strategy, graph):
 
     num_words_considered = 0
     highest_probability = Decimal(0)
@@ -127,7 +129,9 @@ def run_bfs(starting_word, sentence_spec, graph):
                 continue
 
             neighbor_words = filter_list_of_words_by_tag(graph[current_word], sentence_spec[current_word.depth + 1])
-            if current_word.depth + 1 == sentence_spec_len and neighbor_words:
+
+            if search_strategy == HEURISTIC1 and current_word.depth + 1 == sentence_spec_len \
+                    or search_strategy == HEURISTIC2:
                 neighbor_words = filter_list_of_words_by_max_probability(neighbor_words)
 
             for neighbor in neighbor_words:
@@ -144,13 +148,22 @@ def run_bfs(starting_word, sentence_spec, graph):
         print("No valid sentence can be formed")
 
 
-def generate(starting_word, sentence_spec, file_name):
+def generate(starting_word, sentence_spec, search_strategy, file_name):
 
     graph = parse(file_name)
-    run_bfs(starting_word, sentence_spec, graph)
+    if search_strategy == DFS:
+        # run_dfs(starting_word, sentence_spec, graph)
+        print("*Implement DFS*")
+    elif search_strategy == BFS or search_strategy == HEURISTIC1 or search_strategy == HEURISTIC2:
+        run_bfs(starting_word, sentence_spec, search_strategy, graph)
 
 
 FILE_NAME = "../input.txt"
+
+BFS = "BREADTH_FIRST"
+DFS = "DEPTH_FIRST"
+HEURISTIC1 = "HEURISTIC1"
+HEURISTIC2 = "HEURISTIC2"
 
 STARTING_WORD = "hans"
 SENTENCE_SPEC = ["NNP", "VBD", "DT", "NN"]
@@ -170,14 +183,26 @@ SENTENCE_SPEC4 = ["DT", "NN", "VBD", "NNP", "IN", "DT", "NN"]
 MY_STARTING_WORD = "hans"
 MY_SENTENCE_SPEC = ["NNP", "VBD"]
 
-print("EXAMPLE")
-generate(STARTING_WORD, SENTENCE_SPEC, FILE_NAME)
 
-print("TEST 1:")
-generate(STARTING_WORD1, SENTENCE_SPEC1, FILE_NAME)
-print("TEST 2:")
-generate(STARTING_WORD2, SENTENCE_SPEC2, FILE_NAME)
-print("TEST 3:")
-generate(STARTING_WORD3, SENTENCE_SPEC3, FILE_NAME)
-print("TEST 4:")
-generate(STARTING_WORD4, SENTENCE_SPEC4, FILE_NAME)
+def run_test(search_strategy):
+
+    print("=====RUN TEST FOR " + search_strategy + "======")
+    print("EXAMPLE")
+    generate(STARTING_WORD, SENTENCE_SPEC, search_strategy, FILE_NAME)
+
+    print("TEST 1:")
+    generate(STARTING_WORD1, SENTENCE_SPEC1, search_strategy, FILE_NAME)
+    print("TEST 2:")
+    generate(STARTING_WORD2, SENTENCE_SPEC2, search_strategy, FILE_NAME)
+    print("TEST 3:")
+    generate(STARTING_WORD3, SENTENCE_SPEC3, search_strategy, FILE_NAME)
+    print("TEST 4:")
+    generate(STARTING_WORD4, SENTENCE_SPEC4, search_strategy, FILE_NAME)
+
+    print("=====END TEST FOR " + search_strategy + "=====\n")
+
+
+run_test(BFS)
+# run_test(DFS)
+run_test(HEURISTIC1)
+run_test(HEURISTIC2)
