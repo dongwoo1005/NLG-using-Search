@@ -121,6 +121,7 @@ def get_sentence_from_word_list(sentence):
             string += " "
     return string
 
+
 ###########################################################################
 # A1Q3 - generate using DFS
 def run_dfs(starting_word, sentence_spec, graph):
@@ -170,6 +171,7 @@ def run_dfs(starting_word, sentence_spec, graph):
         print("Total nodes considered: " + str(num_words_considered))
     else:
         print("No valid sentence can be formed")
+
 
 ###########################################################################
 # A1Q3 - generate using BFS
@@ -233,7 +235,6 @@ def generate(starting_word, sentence_spec, search_strategy, file_name):
     graph = parse(file_name)
     if search_strategy == DFS:
         run_dfs(starting_word, sentence_spec, graph)
-        #print("*Implement DFS*")
     elif search_strategy == BFS or search_strategy == HEURISTIC1 or search_strategy == HEURISTIC2:
         run_bfs(starting_word, sentence_spec, search_strategy, graph)
 
